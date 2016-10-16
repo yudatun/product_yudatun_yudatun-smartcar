@@ -1,0 +1,4 @@
+service smartcar /system/bin/smartcar
+   class late_start
+   user system
+   group system

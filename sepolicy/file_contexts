@@ -1,0 +1,2 @@
+/system/bin/smartcard                  u:object_r:smartcard_exec:s0
+/system/bin/smartcar                   u:object_r:smartcar_exec:s0

@@ -1,0 +1,12 @@
+# Domain for Smartcar Service daemon.
+type smartcard, domain;
+type smartcard_exec, exec_type, file_type;
+
+brillo_domain(smartcard)
+allow_crash_reporter(smartcard)
+
+allow smartcard sysfs:dir r_dir_perms;
+allow smartcard sysfs:file rw_file_perms;
+allow smartcard sysfs:lnk_file read;
+allow smartcard sysfs:lnk_file getattr;
+allow smartcard smartcar_service:service_manager { add find };

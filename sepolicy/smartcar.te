@@ -1,0 +1,11 @@
+# Domain for smartcar daemon.
+type smartcar, domain;
+type smartcar_exec, exec_type, file_type;
+
+brillo_domain(smartcar)
+allow_crash_reporter(smartcar)
+
+allow_call_weave(smartcar)
+
+allow smartcar smartcar_service:service_manager find;
+binder_call(smartcar, smartcard)

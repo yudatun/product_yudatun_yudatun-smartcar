@@ -1,0 +1,4 @@
+service smartcard /system/bin/smartcard
+   class late_start
+   user root
+   group system dbus

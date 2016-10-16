@@ -1,0 +1,54 @@
+{
+  "_smartcar": {
+    "commands": {
+      "action": {
+        "minimalRole": "user",
+        "parameters": {
+          "duration": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100.0
+          },
+          "type": {
+            "type": "string",
+            "enum": [ "none", "forward", "back" ]
+          }
+        }
+      }
+    },
+    "state": {
+      "status": {
+        "type": "string",
+        "enum": [ "idle", "moving" ]
+      }
+    }
+  },
+  "onOff": {
+    "commands": {
+      "setConfig": {
+        "minimalRole": "user",
+        "parameters": {
+          "state": {
+            "type": "string",
+            "enum": [ "on", "off" ]
+          }
+        }
+      }
+    },
+    "state": {
+      "state": {
+        "isRequired": true,
+        "type": "string",
+        "enum": [ "on", "off" ]
+      }
+    }
+  },
+  "_wheelInfo": {
+    "state": {
+      "name": {
+        "isRequired": true,
+        "type": "string"
+      }
+    }
+  }
+}
