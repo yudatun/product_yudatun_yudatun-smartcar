@@ -44,7 +44,6 @@ const char kSmartCarTrait[] = "_smartcar";
 const char kOnOffTrait[] = "onOff";
 const char kWheelInfoTrait[] = "_wheelInfo";
 const int  kDefaultSmartCarPort = 8888;
-const int  kBufferMax = 1024;
 }  // anonymous namespace
 
 using smartcard::binder_utils::ToString;
@@ -61,7 +60,6 @@ class Daemon final : public brillo::Daemon {
     static void* ServerSocketThread(void* data);
     void ServerSocketThreadLoop();
     void LocalInit();
-    int Readx(int s, void *_buf, int count);
 
     void OnWeaveServiceConnected(const std::weak_ptr<weaved::Service>& service);
     void ConnectToSmartCarService();
@@ -135,11 +133,10 @@ void Daemon::ServerSocketThreadLoop() {
     sockaddr_storage ss;
     sockaddr *addrp = reinterpret_cast<sockaddr*>(&ss);
     socklen_t alen;
-    char buf[kBufferMax];
 
     serverfd = -1;
     for (;;) {
-        if (serverfd < 0) {
+        if (serverfd == -1) {
             serverfd = socket_inaddr_any_server(kDefaultSmartCarPort, SOCK_STREAM);
             if (serverfd < 0) {
                 LOG(ERROR) << "Cannot bind socket yet: " << strerror(errno);
@@ -151,55 +148,12 @@ void Daemon::ServerSocketThreadLoop() {
 
         alen = sizeof (ss);
         fd = TEMP_FAILURE_RETRY(accept(serverfd, addrp, &alen));
-        if (fd < 0) {
-            LOG(ERROR) << "Accept failed: " << strerror(errno);
-            continue;
-        }
-        fcntl(fd, F_SETFD, FD_CLOEXEC);
-
-        for (;;) {
+        if (fd >= 0) {
             LOG(INFO) << "New connection on fd: " << fd;
-
-            unsigned short count;
-            if (Readx(fd, &count, sizeof (count))) {
-                LOG(ERROR) << "Failed to read size";
-                break;
-            }
-            if ((count < 1) || (count >= kBufferMax)) {
-                LOG(ERROR) << "Invalid size " << count;
-                break;
-            }
-            if (Readx(fd, buf, count)) {
-                LOG(ERROR) << "Failed to read command";
-                break;
-            }
-            buf[count] = 0;
-            LOG(INFO) << buf;
+            fcntl(fd, F_SETFD, FD_CLOEXEC);
         }
-        LOG(INFO) << "Closing connection";
-        close(fd);
     }
     LOG(INFO) << "Server Socket Thread exiting";
-}
-
-int Daemon::Readx(int s, void *_buf, int count) {
-    char *buf = (char *) _buf;
-    int n = 0, r;
-    if (count < 0) return -1;
-    while (n < count) {
-        r = read(s, buf + n, count - n);
-        if (r < 0) {
-            if (errno == EINTR) continue;
-            LOG(ERROR) << "read error: " << strerror(errno);
-            return -1;
-        }
-        if (r == 0) {
-            LOG(ERROR) << "eof";
-            return -1; /* EOF */
-        }
-        n += r;
-    }
-    return 0;
 }
 
 void Daemon::OnWeaveServiceConnected(
