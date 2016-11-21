@@ -58,12 +58,10 @@ class Daemon final : public brillo::Daemon {
     int OnInit() override;
 
  private:
-    int Readx(int s, void *_buf, int count);
-    int Writex(int s, const void *_buf, int count);
-
     static void* ServerSocketThread(void* data);
     void ServerSocketThreadLoop();
     void LocalInit();
+    int Readx(int s, void *_buf, int count);
 
     void OnWeaveServiceConnected(const std::weak_ptr<weaved::Service>& service);
     void ConnectToSmartCarService();
@@ -123,43 +121,6 @@ int Daemon::OnInit() {
     return EX_OK;
 }
 
-int Daemon::Readx(int s, void *_buf, int count) {
-    char *buf = (char *) _buf;
-    int n = 0, r;
-    if (count < 0) return -1;
-    while (n < count) {
-        r = read(s, buf + n, count - n);
-        if (r < 0) {
-            if (errno == EINTR) continue;
-            LOG(ERROR) << "read error: " << strerror(errno);
-            return -1;
-        }
-        if (r == 0) {
-            LOG(ERROR) << "eof";
-            return -1; /* EOF */
-        }
-        n += r;
-    }
-    return 0;
-}
-
-int Daemon::Writex(int s, const void *_buf, int count)
-{
-    const char *buf = (const char *) _buf;
-    int n = 0, r;
-    if (count < 0) return -1;
-    while (n < count) {
-        r = write(s, buf + n, count - n);
-        if (r < 0) {
-            if (errno == EINTR) continue;
-            LOG(ERROR) << "Write error: " << strerror(errno);
-            return -1;
-        }
-        n += r;
-    }
-    return 0;
-}
-
 void Daemon::LocalInit() {
     pthread_create(&server_socket_thread_, nullptr, ServerSocketThread, this);
 }
@@ -213,12 +174,32 @@ void Daemon::ServerSocketThreadLoop() {
                 break;
             }
             buf[count] = 0;
-            StartAction(std::string(buf), base::TimeDelta::FromSecondsD(0));
+            LOG(INFO) << buf;
         }
         LOG(INFO) << "Closing connection";
         close(fd);
     }
     LOG(INFO) << "Server Socket Thread exiting";
+}
+
+int Daemon::Readx(int s, void *_buf, int count) {
+    char *buf = (char *) _buf;
+    int n = 0, r;
+    if (count < 0) return -1;
+    while (n < count) {
+        r = read(s, buf + n, count - n);
+        if (r < 0) {
+            if (errno == EINTR) continue;
+            LOG(ERROR) << "read error: " << strerror(errno);
+            return -1;
+        }
+        if (r == 0) {
+            LOG(ERROR) << "eof";
+            return -1; /* EOF */
+        }
+        n += r;
+    }
+    return 0;
 }
 
 void Daemon::OnWeaveServiceConnected(
