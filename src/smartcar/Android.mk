@@ -31,7 +31,6 @@ LOCAL_SHARED_LIBRARIES := \
     libbrillo-binder \
     libbrillo-stream \
     libchrome \
-    libcutils \
     libutils \
     libweaved \
 

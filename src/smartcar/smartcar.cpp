@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-#include <errno.h>
-#include <fcntl.h>
-#include <pthread.h>
-#include <string.h>
 #include <sysexits.h>
 
 #include <base/bind.h>
@@ -27,8 +23,6 @@
 #include <brillo/daemons/daemon.h>
 #include <brillo/syslog_logging.h>
 #include <libweaved/service.h>
-#include <cutils/fs.h>
-#include <cutils/sockets.h>
 
 #include "action.h"
 #include "binder_constants.h"
@@ -43,7 +37,6 @@ const char kWheelComponentPrefix[] = "wheel";
 const char kSmartCarTrait[] = "_smartcar";
 const char kOnOffTrait[] = "onOff";
 const char kWheelInfoTrait[] = "_wheelInfo";
-const int  kDefaultSmartCarPort = 8888;
 }  // anonymous namespace
 
 using smartcard::binder_utils::ToString;
@@ -57,10 +50,6 @@ class Daemon final : public brillo::Daemon {
     int OnInit() override;
 
  private:
-    static void* ServerSocketThread(void* data);
-    void ServerSocketThreadLoop();
-    void LocalInit();
-
     void OnWeaveServiceConnected(const std::weak_ptr<weaved::Service>& service);
     void ConnectToSmartCarService();
     void OnSmartCarServiceDisconnected();
@@ -74,8 +63,6 @@ class Daemon final : public brillo::Daemon {
 
     void StartAction(const std::string& type, base::TimeDelta duration);
     void StopAction();
-
-    pthread_t server_socket_thread_;
 
     // Device state variables.
     std::string status_{"idle"};
@@ -106,8 +93,6 @@ int Daemon::OnInit() {
     if (!binder_watcher_.Init())
         return EX_OSERR;
 
-    LocalInit();
-
     weave_service_subscription_ = weaved::Service::Connect(
         brillo::MessageLoop::current(),
         base::Bind(&Daemon::OnWeaveServiceConnected,
@@ -117,43 +102,6 @@ int Daemon::OnInit() {
 
     LOG(INFO) << "Waiting for commands...";
     return EX_OK;
-}
-
-void Daemon::LocalInit() {
-    pthread_create(&server_socket_thread_, nullptr, ServerSocketThread, this);
-}
-
-void* Daemon::ServerSocketThread(void* data) {
-    reinterpret_cast<Daemon*>(data)->ServerSocketThreadLoop();
-    return nullptr;
-}
-
-void Daemon::ServerSocketThreadLoop() {
-    int serverfd, fd;
-    sockaddr_storage ss;
-    sockaddr *addrp = reinterpret_cast<sockaddr*>(&ss);
-    socklen_t alen;
-
-    serverfd = -1;
-    for (;;) {
-        if (serverfd == -1) {
-            serverfd = socket_inaddr_any_server(kDefaultSmartCarPort, SOCK_STREAM);
-            if (serverfd < 0) {
-                LOG(ERROR) << "Cannot bind socket yet: " << strerror(errno);
-                usleep(1000 * 1000); // 1s
-                continue;
-            }
-            fcntl(serverfd, F_SETFD, FD_CLOEXEC);
-        }
-
-        alen = sizeof (ss);
-        fd = TEMP_FAILURE_RETRY(accept(serverfd, addrp, &alen));
-        if (fd >= 0) {
-            LOG(INFO) << "New connection on fd: " << fd;
-            fcntl(fd, F_SETFD, FD_CLOEXEC);
-        }
-    }
-    LOG(INFO) << "Server Socket Thread exiting";
 }
 
 void Daemon::OnWeaveServiceConnected(
