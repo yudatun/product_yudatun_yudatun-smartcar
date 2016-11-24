@@ -202,13 +202,16 @@ void Daemon::CreateSmartCarComponentsIfNeeded() {
 }
 
 void Daemon::OnSmartCarServiceDisconnected() {
+    LOG(INFO) << "Daemon::OnSmartCarServiceDisconnected";
+
     action_.reset();
     smartcar_service_ = nullptr;
     ConnectToSmartCarService();
 }
 
-void Daemon::OnSetConfig(
-    int pin, std::unique_ptr<weaved::Command> command) {
+void Daemon::OnSetConfig(int pin, std::unique_ptr<weaved::Command> command) {
+    LOG(INFO) << "received command: " << command->GetName();
+
     if (!smartcar_service_.get()) {
         command->Abort("_system_error", "smartcar service unavailable", nullptr);
         return;
@@ -242,10 +245,13 @@ void Daemon::OnSetConfig(
 }
 
 void Daemon::OnAction(std::unique_ptr<weaved::Command> command) {
+    LOG(INFO) << "received command: " << command->GetName();
+
     if (!smartcar_service_.get()) {
         command->Abort("_system_error", "smartcar service unavailable", nullptr);
         return;
     }
+
     double duration = command->GetParameter<double>("duration");
     if (duration <= 0.0) {
         command->Abort("_invalid_parameter", "Invalid parameter value", nullptr);
@@ -277,8 +283,7 @@ void Daemon::StopAction() {
     UpdateDeviceState();
 }
 
-void Daemon::OnPairingInfoChanged(
-    const weaved::Service::PairingInfo* pairing_info) {
+void Daemon::OnPairingInfoChanged(const weaved::Service::PairingInfo* pairing_info) {
     LOG(INFO) << "Daemon::OnPairingInfoChanged: " << pairing_info;
     if (!pairing_info) {
         return StopAction();

@@ -64,6 +64,8 @@ std::unique_ptr<Action> Action::Create(
     const base::TimeDelta& duration) {
     std::unique_ptr<Action> action;
 
+    LOG(INFO) << "Action: {" << type << ", " << duration << "}";
+
     if (type == "forward") {
         action.reset(new ActionForward{smartcar_service, duration});
     } else if (type == "back") {
