@@ -1,1 +1,2 @@
-include vendor/raspberrypi/firmware/products.mk
+########################################
+include device/rpi/raspberrypi3/packages.mk

@@ -40,8 +40,5 @@ PRODUCT_COPY_FILES += $(addprefix $(LOCAL_PATH)/,$(call cfgtree-get-if-exists,co
 BOARD_SEPOLICY_DIRS := $(BOARD_SEPOLICY_DIRS) $(LOCAL_PATH)/sepolicy
 
 ########################################
-include device/rpi/raspberrypi-common/raspberrypi.mk
-
-########################################
 # Add any extra Android product.mk directive in extras.mk
 -include $(LOCAL_PATH)/extras.mk
