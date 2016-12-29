@@ -22,6 +22,7 @@ LOCAL_REQUIRED_MODULES := smartcar.json
 LOCAL_SRC_FILES := \
     action.cpp \
     action_forward.cpp \
+    configs.cpp \
     smartcar.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
@@ -31,14 +32,14 @@ LOCAL_SHARED_LIBRARIES := \
     libbrillo-binder \
     libbrillo-stream \
     libchrome \
-    libutils \
-    libweaved \
+    libutils
 
 LOCAL_STATIC_LIBRARIES := \
     libsmartcard \
 
 LOCAL_CFLAGS := -Wall -Werror
 LOCAL_CLANG := true
+LOCAL_C_INCLUDES := thirdparty/paho.mqtt.c/src
 
 include $(BUILD_EXECUTABLE)
 
